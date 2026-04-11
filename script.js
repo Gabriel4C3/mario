@@ -9,7 +9,6 @@ import {
     query,
     serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js'
-import { getAnalytics } from "firebase/analytics";
 
 
 const firebaseConfig = {
