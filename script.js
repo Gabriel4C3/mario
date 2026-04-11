@@ -52,6 +52,18 @@ const jump = () => {
     }, 700)
 }
 
+const handleBoardTouch = (event) => {
+    if (
+        event.target.closest('.start-button') ||
+        event.target.closest('.restart-button')
+    ) {
+        return
+    }
+
+    event.preventDefault()
+    jump()
+}
+
 const updateScore = () => {
     if (!isGameStarted || isGameOver) {
         return
@@ -153,6 +165,7 @@ window.addEventListener('load', tryPlayStartMusic)
 window.addEventListener('focus', tryPlayStartMusic)
 document.addEventListener('click', tryPlayStartMusic, { once: true })
 document.addEventListener('touchstart', tryPlayStartMusic, { once: true })
+gameBoard.addEventListener('pointerdown', handleBoardTouch)
 startButton.addEventListener('click', startGame)
 restartButton.addEventListener('click', () => {
     if (isRestarting) {
