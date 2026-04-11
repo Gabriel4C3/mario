@@ -25,6 +25,11 @@ const isFirebaseConfigured = () =>
     Object.values(firebaseConfig).every(
         (value) => typeof value === 'string' && value.trim() !== '' && !value.startsWith('COLE_')
     )
+//addDoc(collection(db, 'rankings'), {
+  //  name: playerName,
+   // score: score,
+  //  createdAt: serverTimestamp()
+//})
 
 const gameBoard = document.querySelector('.game-board')
 const mario = document.querySelector('.mario')
