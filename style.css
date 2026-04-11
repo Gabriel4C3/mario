@@ -1,4 +1,11 @@
 @charset "utf-8";
+:root{
+    --board-height: 500px;
+    --pipe-width: 80px;
+    --mario-width: 150px;
+    --jump-peak: 190px;
+    --jump-duration: 750ms;
+}
 *{
     padding: 0px;
     margin: 0px;
@@ -15,7 +22,7 @@ body{
 }
 .game-board{
     width: 100%;
-    height: 500px;
+    height: var(--board-height);
     border:1px  solid #333;
     margin: 0 auto;
     position: relative;
@@ -34,11 +41,11 @@ body{
 .pipe{
     position: absolute;
     bottom: 0;
-    width: 80px;
+    width: var(--pipe-width);
     animation: pipe-animation 2s infinite linear; 
 }
 .mario{
-    width: 150px;
+    width: var(--mario-width);
     position: absolute;
     bottom: 0;
 }
@@ -133,7 +140,7 @@ body{
     box-shadow: none;
 }
 .jump{
- animation: jump 750ms ease-out;
+ animation: jump var(--jump-duration) ease-out;
 }
 
 footer{
@@ -157,6 +164,14 @@ footer{
 }
 
 @media (max-width: 700px){
+    :root{
+        --board-height: min(78vh, 420px);
+        --pipe-width: 64px;
+        --mario-width: 120px;
+        --jump-peak: 205px;
+        --jump-duration: 700ms;
+    }
+
     .hud{
         top: 16px;
         right: 16px;
@@ -193,7 +208,7 @@ footer{
 
 @keyframes pipe-animation {
     from {
-        right: -80px;
+        right: calc(var(--pipe-width) * -1);
     }
 
     to {
@@ -209,22 +224,22 @@ footer{
     
 
     40% {
-        bottom: 180px;
+        bottom: calc(var(--jump-peak) - 10px);
     }
 
     50% {
-        bottom: 190px;
+        bottom: var(--jump-peak);
 
     }
     60%{
-        bottom: 185px;
+        bottom: calc(var(--jump-peak) - 5px);
     }
     70%{
-        bottom: 180px;
+        bottom: calc(var(--jump-peak) - 10px);
 
     }
     80%{
-        bottom: 160px;
+        bottom: calc(var(--jump-peak) - 30px);
     }
 
      

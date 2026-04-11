@@ -17,12 +17,14 @@ const gameOverSound = document.querySelector('.game-over-sound')
 
 const highScore = Number(localStorage.getItem('mario-high-score')) || 0
 const START_DELAY_MS = 280
+const MOBILE_BREAKPOINT = 700
 let score = 0
 let isGameStarted = false
 let isGameOver = false
 let isRestarting = false
 let isStarting = false
 let hasPlayedNewRecordSound = false
+let jumpTimeoutId
 
 gameBoard.classList.add('is-paused')
 recordValue.textContent = String(highScore)
@@ -39,6 +41,15 @@ const tryPlayStartMusic = () => {
 
 tryPlayStartMusic()
 
+const getJumpDuration = () => {
+    const jumpDurationValue = getComputedStyle(document.documentElement)
+        .getPropertyValue('--jump-duration')
+        .trim()
+    const jumpDuration = Number.parseFloat(jumpDurationValue)
+
+    return Number.isFinite(jumpDuration) ? jumpDuration : 700
+}
+
 const jump = () => {
     if (!isGameStarted || isGameOver) {
         return
@@ -46,10 +57,13 @@ const jump = () => {
 
     jumpSound.currentTime = 0
     jumpSound.play().catch(() => {})
+    mario.classList.remove('jump')
+    void mario.offsetWidth
     mario.classList.add('jump')
-    setTimeout(() => {
+    clearTimeout(jumpTimeoutId)
+    jumpTimeoutId = setTimeout(() => {
         mario.classList.remove('jump')
-    }, 700)
+    }, getJumpDuration())
 }
 
 const handleBoardTouch = (event) => {
@@ -144,6 +158,22 @@ const playDetachedSound = (soundElement) => {
     }
 }
 
+const getCollisionThresholds = () => {
+    const marioRect = mario.getBoundingClientRect()
+    const pipeRect = pipe.getBoundingClientRect()
+    const isMobileViewport = window.innerWidth <= MOBILE_BREAKPOINT
+    const horizontalThreshold = Math.max(
+        45,
+        marioRect.width * (isMobileViewport ? 0.6 : 0.72)
+    )
+    const verticalThreshold = pipeRect.height * (isMobileViewport ? 0.82 : 0.9)
+
+    return {
+        horizontalThreshold,
+        verticalThreshold
+    }
+}
+
 const loop = setInterval(() => {
     if (!isGameStarted || isGameOver) {
         return
@@ -151,8 +181,13 @@ const loop = setInterval(() => {
 
     const pipePosition = pipe.offsetLeft
     const marioPosition = +window.getComputedStyle(mario).bottom.replace('px', '')
+    const { horizontalThreshold, verticalThreshold } = getCollisionThresholds()
 
-    if (pipePosition <= 120 && pipePosition > 0 && marioPosition < 80) {
+    if (
+        pipePosition <= horizontalThreshold &&
+        pipePosition > 0 &&
+        marioPosition < verticalThreshold
+    ) {
         endGame(pipePosition, marioPosition)
         clearInterval(loop)
     }
