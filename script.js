@@ -11,21 +11,33 @@ const startMusic = document.querySelector('.start-music')
 const startSound = document.querySelector('.start-sound')
 const bgMusic = document.querySelector('.bg-music')
 const jumpSound = document.querySelector('.jump-sound')
+const coinSound = document.querySelector('.coin-sound')
 const restartSound = document.querySelector('.restart-sound')
 const gameOverSound = document.querySelector('.game-over-sound')
 
 const highScore = Number(localStorage.getItem('mario-high-score')) || 0
 const START_DELAY_MS = 280
-const RESTART_DELAY_MS = 320
 let score = 0
 let isGameStarted = false
 let isGameOver = false
 let isRestarting = false
 let isStarting = false
+let hasPlayedNewRecordSound = false
 
 gameBoard.classList.add('is-paused')
 recordValue.textContent = String(highScore)
-startMusic.play().catch(() => {})
+
+const tryPlayStartMusic = () => {
+    const isOnStartScreen = startPanel.classList.contains('show')
+
+    if (!isOnStartScreen || isGameStarted || isStarting || isRestarting) {
+        return
+    }
+
+    startMusic.play().catch(() => {})
+}
+
+tryPlayStartMusic()
 
 const jump = () => {
     if (!isGameStarted || isGameOver) {
@@ -48,6 +60,12 @@ const updateScore = () => {
     score += 1
     scoreValue.textContent = String(score)
 
+    if (!hasPlayedNewRecordSound && score > highScore) {
+        hasPlayedNewRecordSound = true
+        coinSound.currentTime = 0
+        coinSound.play().catch(() => {})
+    }
+
     if (score > Number(recordValue.textContent)) {
         recordValue.textContent = String(score)
     }
@@ -61,6 +79,7 @@ const startGame = () => {
     isStarting = true
     startMusic.pause()
     startMusic.currentTime = 0
+    startPanel.classList.remove('show')
     startSound.currentTime = 0
 
     const beginRun = () => {
@@ -71,7 +90,6 @@ const startGame = () => {
         isGameStarted = true
         isStarting = false
         gameBoard.classList.remove('is-paused')
-        startPanel.classList.remove('show')
         bgMusic.currentTime = 0
         bgMusic.play().catch(() => {})
     }
@@ -105,6 +123,15 @@ const endGame = (pipePosition, marioPosition) => {
     gameOverSound.play().catch(() => {})
 }
 
+const playDetachedSound = (soundElement) => {
+    const soundInstance = soundElement.cloneNode()
+    soundInstance.currentTime = 0
+    return {
+        soundInstance,
+        playPromise: soundInstance.play()
+    }
+}
+
 const loop = setInterval(() => {
     if (!isGameStarted || isGameOver) {
         return
@@ -122,6 +149,10 @@ const loop = setInterval(() => {
 const scoreLoop = setInterval(updateScore, 150)
 
 document.addEventListener('keydown', jump)
+window.addEventListener('load', tryPlayStartMusic)
+window.addEventListener('focus', tryPlayStartMusic)
+document.addEventListener('click', tryPlayStartMusic, { once: true })
+document.addEventListener('touchstart', tryPlayStartMusic, { once: true })
 startButton.addEventListener('click', startGame)
 restartButton.addEventListener('click', () => {
     if (isRestarting) {
@@ -130,12 +161,19 @@ restartButton.addEventListener('click', () => {
 
     isRestarting = true
     gameOverSound.pause()
-    restartSound.currentTime = 0
-    restartSound.play().catch(() => {})
+    const { soundInstance: restartInstance, playPromise } = playDetachedSound(restartSound)
 
     const reloadGame = () => {
         window.location.reload()
     }
 
-    setTimeout(reloadGame, RESTART_DELAY_MS)
+    restartInstance.addEventListener('ended', reloadGame, { once: true })
+    restartInstance.addEventListener('error', reloadGame, { once: true })
+    playPromise.catch(reloadGame)
+
+    if (!Number.isFinite(restartInstance.duration) || restartInstance.duration === 0) {
+        restartInstance.addEventListener('loadedmetadata', () => {
+            setTimeout(reloadGame, restartInstance.duration * 1000)
+        }, { once: true })
+    }
 })

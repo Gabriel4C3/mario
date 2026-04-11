@@ -6,7 +6,9 @@
 }
 body{
     overflow: hidden;
-    background-color: #333;
+    background-color: #4d2b05;
+    min-height: 100vh;
+    position: relative;
 }
 .game-board{
     width: 100%;
@@ -131,6 +133,26 @@ body{
  animation: jump 750ms ease-out;
 }
 
+footer{
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    padding: 10px 18px;
+    border: 3px solid #2f1b08;
+    border-radius: 999px;
+    background:
+        linear-gradient(180deg, #fff3bf 0%, #f4c542 100%);
+    color: #5a2f0b;
+    font-family: "Press Start 2P", system-ui;
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.45);
+    box-shadow: 0 6px 0 #8f5a16, 0 12px 24px rgba(0, 0, 0, 0.28);
+    z-index: 20;
+}
+
 @media (max-width: 700px){
     .hud{
         top: 16px;
@@ -156,6 +178,12 @@ body{
     .start-button,
     .restart-button{
         font-size: 0.7rem;
+    }
+
+    footer{
+        bottom: 14px;
+        padding: 8px 14px;
+        font-size: 0.5rem;
     }
 }
 
