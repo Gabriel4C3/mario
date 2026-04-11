@@ -4,6 +4,9 @@
     margin: 0px;
     box-sizing: border-box;
 }
+body{
+    overflow: hidden;
+}
 .game-board{
     width: 100%;
     height: 500px;
@@ -12,7 +15,8 @@
     position: relative;
     overflow: hidden;
     border-bottom: 20px solid rgb(35,160, 35);
-    background: linear-gradient(#87ceeb,#e0f6ff);
+    
+    
 }
 .claud{
     width: 550px;
@@ -31,6 +35,38 @@
     position: absolute;
     bottom: 0;
 }
+.hud{
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    display: flex;
+    align-items: flex-end;
+    gap: 18px;
+    z-index: 6;
+    font-family: "Press Start 2P", system-ui;
+    color: #fff;
+    text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.35);
+}
+.hud-item{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+.score-label{
+    font-size: 0.8rem;
+}
+.score-value,
+.record-value{
+    min-width: 72px;
+    text-align: right;
+    font-size: 1.2rem;
+}
+.game-board.is-paused .pipe,
+.game-board.is-paused .claud{
+    animation-play-state: paused;
+}
+.start-panel,
 .game-over-panel{
     position: absolute;
     inset: 0;
@@ -44,14 +80,30 @@
     font-family: "Press Start 2P", system-ui;
     text-align: center;
 }
+.start-panel{
+    background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.22), transparent 42%),
+        rgba(17, 24, 39, 0.45);
+    z-index: 9;
+}
+.start-panel.show,
 .game-over-panel.show{
     display: flex;
 }
+.start-panel h1,
 .game-over-panel h1{
     color: #fff;
     font-size: 2rem;
     text-shadow: 4px 4px 0 #c0392b;
 }
+.start-panel p{
+    max-width: 420px;
+    padding: 0 20px;
+    color: #fff7d6;
+    font-size: 0.8rem;
+    line-height: 1.8;
+}
+.start-button,
 .restart-button{
     border: none;
     padding: 14px 24px;
@@ -63,16 +115,46 @@
     box-shadow: 0 6px 0 #a95413;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+.start-button:hover,
 .restart-button:hover{
     transform: translateY(2px);
     box-shadow: 0 4px 0 #a95413;
 }
+.start-button:active,
 .restart-button:active{
     transform: translateY(6px);
     box-shadow: none;
 }
 .jump{
  animation: jump 750ms ease-out;
+}
+
+@media (max-width: 700px){
+    .hud{
+        top: 16px;
+        right: 16px;
+    }
+
+    .score-label{
+        font-size: 0.65rem;
+    }
+
+    .score-value,
+    .record-value{
+        min-width: 56px;
+        font-size: 0.95rem;
+    }
+
+    .start-panel h1,
+    .game-over-panel h1{
+        font-size: 1.4rem;
+    }
+
+    .start-panel p,
+    .start-button,
+    .restart-button{
+        font-size: 0.7rem;
+    }
 }
 
 
@@ -121,7 +203,7 @@
 @keyframes claud-animation{
 
     from {
-        right: -550x;
+        right: -550px;
     }
 
     to {
