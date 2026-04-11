@@ -1,12 +1,43 @@
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js'
+import {
+    addDoc,
+    collection,
+    getFirestore,
+    limit,
+    onSnapshot,
+    orderBy,
+    query,
+    serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js'
+
+const firebaseConfig = {
+    apiKey: 'COLE_SUA_API_KEY',
+    authDomain: 'COLE_SEU_AUTH_DOMAIN',
+    projectId: 'COLE_SEU_PROJECT_ID',
+    storageBucket: 'COLE_SEU_STORAGE_BUCKET',
+    messagingSenderId: 'COLE_SEU_MESSAGING_SENDER_ID',
+    appId: 'COLE_SEU_APP_ID'
+}
+
+const isFirebaseConfigured = () =>
+    Object.values(firebaseConfig).every(
+        (value) => typeof value === 'string' && value.trim() !== '' && !value.startsWith('COLE_')
+    )
+
 const gameBoard = document.querySelector('.game-board')
 const mario = document.querySelector('.mario')
 const pipe = document.querySelector('.pipe')
 const startPanel = document.querySelector('.start-panel')
 const startButton = document.querySelector('.start-button')
+const startFeedback = document.querySelector('.start-feedback')
+const nameInput = document.querySelector('.player-name-input')
 const gameOverPanel = document.querySelector('.game-over-panel')
 const restartButton = document.querySelector('.restart-button')
+const saveFeedback = document.querySelector('.save-feedback')
 const scoreValue = document.querySelector('.score-value')
 const recordValue = document.querySelector('.record-value')
+const rankingBody = document.querySelector('.ranking-body')
+const rankingStatus = document.querySelector('.ranking-status')
 const startMusic = document.querySelector('.start-music')
 const startSound = document.querySelector('.start-sound')
 const bgMusic = document.querySelector('.bg-music')
@@ -15,9 +46,12 @@ const coinSound = document.querySelector('.coin-sound')
 const restartSound = document.querySelector('.restart-sound')
 const gameOverSound = document.querySelector('.game-over-sound')
 
+const scoresCollectionName = 'rankings'
 const highScore = Number(localStorage.getItem('mario-high-score')) || 0
+const storedPlayerName = localStorage.getItem('mario-player-name') || ''
 const START_DELAY_MS = 280
 const MOBILE_BREAKPOINT = 700
+const RANKING_LIMIT = 10
 let score = 0
 let isGameStarted = false
 let isGameOver = false
@@ -25,9 +59,13 @@ let isRestarting = false
 let isStarting = false
 let hasPlayedNewRecordSound = false
 let jumpTimeoutId
+let playerName = storedPlayerName
+let isScoreSaved = false
+let db = null
 
 gameBoard.classList.add('is-paused')
 recordValue.textContent = String(highScore)
+nameInput.value = storedPlayerName
 
 const tryPlayStartMusic = () => {
     const isOnStartScreen = startPanel.classList.contains('show')
@@ -39,7 +77,81 @@ const tryPlayStartMusic = () => {
     startMusic.play().catch(() => {})
 }
 
+const normalizePlayerName = (value) => value.trim().replace(/\s+/g, ' ').slice(0, 16)
+const escapeHtml = (value) =>
+    value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;')
+
+const renderRankingRows = (entries) => {
+    if (!entries.length) {
+        rankingBody.innerHTML = `
+            <tr>
+                <td colspan="3">Nenhum score enviado ainda.</td>
+            </tr>
+        `
+        return
+    }
+
+    rankingBody.innerHTML = entries
+        .map(
+            (entry, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${escapeHtml(entry.name)}</td>
+                    <td>${entry.score}</td>
+                </tr>
+            `
+        )
+        .join('')
+}
+
+const setupRanking = () => {
+    if (!isFirebaseConfigured()) {
+        rankingStatus.textContent = 'Configure o Firebase'
+        renderRankingRows([])
+        saveFeedback.textContent = 'Preencha as credenciais do Firebase para salvar o ranking global.'
+        return
+    }
+
+    const app = initializeApp(firebaseConfig)
+    db = getFirestore(app)
+    const rankingQuery = query(
+        collection(db, scoresCollectionName),
+        orderBy('score', 'desc'),
+        limit(RANKING_LIMIT)
+    )
+
+    onSnapshot(
+        rankingQuery,
+        (snapshot) => {
+            const entries = snapshot.docs.map((doc) => {
+                const data = doc.data()
+                return {
+                    name: data.name || 'Sem nome',
+                    score: Number(data.score) || 0
+                }
+            })
+
+            rankingStatus.textContent = 'Online'
+            renderRankingRows(entries)
+        },
+        () => {
+            rankingStatus.textContent = 'Erro ao carregar'
+            rankingBody.innerHTML = `
+                <tr>
+                    <td colspan="3">Nao foi possivel ler o ranking.</td>
+                </tr>
+            `
+        }
+    )
+}
+
 tryPlayStartMusic()
+setupRanking()
 
 const getJumpDuration = () => {
     const jumpDurationValue = getComputedStyle(document.documentElement)
@@ -69,7 +181,8 @@ const jump = () => {
 const handleBoardTouch = (event) => {
     if (
         event.target.closest('.start-button') ||
-        event.target.closest('.restart-button')
+        event.target.closest('.restart-button') ||
+        event.target.closest('.player-name-input')
     ) {
         return
     }
@@ -97,8 +210,24 @@ const updateScore = () => {
     }
 }
 
+const validatePlayerName = () => {
+    const normalizedName = normalizePlayerName(nameInput.value)
+
+    if (!normalizedName) {
+        startFeedback.textContent = 'Digite seu nome antes de iniciar.'
+        nameInput.focus()
+        return false
+    }
+
+    playerName = normalizedName
+    nameInput.value = normalizedName
+    localStorage.setItem('mario-player-name', normalizedName)
+    startFeedback.textContent = ''
+    return true
+}
+
 const startGame = () => {
-    if (isGameStarted || isStarting) {
+    if (isGameStarted || isStarting || !validatePlayerName()) {
         return
     }
 
@@ -126,6 +255,31 @@ const startGame = () => {
     setTimeout(beginRun, START_DELAY_MS)
 }
 
+const saveScoreToRanking = async () => {
+    if (isScoreSaved) {
+        return
+    }
+
+    isScoreSaved = true
+
+    if (!db || !playerName) {
+        saveFeedback.textContent = 'Score local salvo. Configure o Firebase para publicar no ranking global.'
+        return
+    }
+
+    try {
+        saveFeedback.textContent = 'Salvando score no ranking global...'
+        await addDoc(collection(db, scoresCollectionName), {
+            name: playerName,
+            score,
+            createdAt: serverTimestamp()
+        })
+        saveFeedback.textContent = `${playerName} entrou no ranking com ${score} pontos.`
+    } catch {
+        saveFeedback.textContent = 'Nao foi possivel salvar no ranking global.'
+    }
+}
+
 const endGame = (pipePosition, marioPosition) => {
     isGameOver = true
     pipe.style.animation = 'none'
@@ -147,6 +301,7 @@ const endGame = (pipePosition, marioPosition) => {
     bgMusic.currentTime = 0
     gameOverSound.currentTime = 0
     gameOverSound.play().catch(() => {})
+    saveScoreToRanking()
 }
 
 const playDetachedSound = (soundElement) => {
@@ -193,9 +348,26 @@ const loop = setInterval(() => {
     }
 }, 10)
 
-const scoreLoop = setInterval(updateScore, 150)
+setInterval(updateScore, 150)
 
-document.addEventListener('keydown', jump)
+nameInput.addEventListener('input', () => {
+    startFeedback.textContent = ''
+})
+nameInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault()
+        startGame()
+    }
+})
+document.addEventListener('keydown', (event) => {
+    if (event.key === ' ' || event.key === 'ArrowUp') {
+        event.preventDefault()
+    }
+
+    if (isGameStarted) {
+        jump()
+    }
+})
 window.addEventListener('load', tryPlayStartMusic)
 window.addEventListener('focus', tryPlayStartMusic)
 document.addEventListener('click', tryPlayStartMusic, { once: true })
