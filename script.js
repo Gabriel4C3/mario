@@ -21,8 +21,6 @@ const firebaseConfig = {
   measurementId: "G-9XY3CKMQNG"
 }
 
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app)
 const isFirebaseConfigured = () =>
     Object.values(firebaseConfig).every(
         (value) => typeof value === 'string' && value.trim() !== '' && !value.startsWith('COLE_')
