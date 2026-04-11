@@ -13,8 +13,6 @@
     overflow: hidden;
     border-bottom: 20px solid rgb(35,160, 35);
     background: linear-gradient(#87ceeb,#e0f6ff);
-
-
 }
 .claud{
     width: 550px;
@@ -32,7 +30,46 @@
     width: 150px;
     position: absolute;
     bottom: 0;
-    
+}
+.game-over-panel{
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 10;
+    font-family: "Press Start 2P", system-ui;
+    text-align: center;
+}
+.game-over-panel.show{
+    display: flex;
+}
+.game-over-panel h1{
+    color: #fff;
+    font-size: 2rem;
+    text-shadow: 4px 4px 0 #c0392b;
+}
+.restart-button{
+    border: none;
+    padding: 14px 24px;
+    font-family: "Press Start 2P", system-ui;
+    font-size: 0.9rem;
+    color: #fff;
+    background: #e67e22;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #a95413;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.restart-button:hover{
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 #a95413;
+}
+.restart-button:active{
+    transform: translateY(6px);
+    box-shadow: none;
 }
 .jump{
  animation: jump 750ms ease-out;
@@ -84,7 +121,7 @@
 @keyframes claud-animation{
 
     from {
-        right: -80px;
+        right: -550x;
     }
 
     to {
