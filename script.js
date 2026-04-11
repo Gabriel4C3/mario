@@ -9,16 +9,22 @@ import {
     query,
     serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js'
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+;
 
 const firebaseConfig = {
-    apiKey: 'COLE_SUA_API_KEY',
-    authDomain: 'COLE_SEU_AUTH_DOMAIN',
-    projectId: 'COLE_SEU_PROJECT_ID',
-    storageBucket: 'COLE_SEU_STORAGE_BUCKET',
-    messagingSenderId: 'COLE_SEU_MESSAGING_SENDER_ID',
-    appId: 'COLE_SEU_APP_ID'
+  apiKey: "AIzaSyBfXKJ7Zj6SxxEEEywNaQQTDVrEZNP5DGs",
+  authDomain: "mario-jump-9daa1.firebaseapp.com",
+  projectId: "mario-jump-9daa1",
+  storageBucket: "mario-jump-9daa1.firebasestorage.app",
+  messagingSenderId: "665048851942",
+  appId: "1:665048851942:web:faeec9725b6d37ae086227",
+  measurementId: "G-9XY3CKMQNG"
 }
 
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app)
 const isFirebaseConfigured = () =>
     Object.values(firebaseConfig).every(
         (value) => typeof value === 'string' && value.trim() !== '' && !value.startsWith('COLE_')
