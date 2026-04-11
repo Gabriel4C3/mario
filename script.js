@@ -33,9 +33,12 @@ const startFeedback = document.querySelector('.start-feedback')
 const nameInput = document.querySelector('.player-name-input')
 const gameOverPanel = document.querySelector('.game-over-panel')
 const restartButton = document.querySelector('.restart-button')
+const playAgainButton = document.querySelector('.play-again-button')
+const playerResult = document.querySelector('.player-result')
 const saveFeedback = document.querySelector('.save-feedback')
 const scoreValue = document.querySelector('.score-value')
 const recordValue = document.querySelector('.record-value')
+const rankingPanel = document.querySelector('.ranking-panel')
 const rankingBody = document.querySelector('.ranking-body')
 const rankingStatus = document.querySelector('.ranking-status')
 const startMusic = document.querySelector('.start-music')
@@ -62,6 +65,7 @@ let jumpTimeoutId
 let playerName = storedPlayerName
 let isScoreSaved = false
 let db = null
+let latestSavedEntry = null
 
 gameBoard.classList.add('is-paused')
 recordValue.textContent = String(highScore)
@@ -107,6 +111,28 @@ const renderRankingRows = (entries) => {
             `
         )
         .join('')
+
+    if (!latestSavedEntry) {
+        return
+    }
+
+    const matchingRows = [...rankingBody.querySelectorAll('tr')]
+    const highlightedRow = matchingRows.find((row) => {
+        const cells = row.querySelectorAll('td')
+
+        if (cells.length < 3) {
+            return false
+        }
+
+        return (
+            cells[1].textContent === latestSavedEntry.name &&
+            cells[2].textContent === String(latestSavedEntry.score)
+        )
+    })
+
+    if (highlightedRow) {
+        highlightedRow.classList.add('is-current-player')
+    }
 }
 
 const setupRanking = () => {
@@ -182,6 +208,7 @@ const handleBoardTouch = (event) => {
     if (
         event.target.closest('.start-button') ||
         event.target.closest('.restart-button') ||
+        event.target.closest('.play-again-button') ||
         event.target.closest('.player-name-input')
     ) {
         return
@@ -274,6 +301,10 @@ const saveScoreToRanking = async () => {
             score,
             createdAt: serverTimestamp()
         })
+        latestSavedEntry = {
+            name: playerName,
+            score
+        }
         saveFeedback.textContent = `${playerName} entrou no ranking com ${score} pontos.`
     } catch {
         saveFeedback.textContent = 'Nao foi possivel salvar no ranking global.'
@@ -291,6 +322,7 @@ const endGame = (pipePosition, marioPosition) => {
     mario.style.width = '75px'
     mario.style.marginLeft = '50px'
 
+    playerResult.textContent = `${playerName} - ${score} pontos`
     gameOverPanel.classList.add('show')
 
     if (score > highScore) {
@@ -302,6 +334,19 @@ const endGame = (pipePosition, marioPosition) => {
     gameOverSound.currentTime = 0
     gameOverSound.play().catch(() => {})
     saveScoreToRanking()
+}
+
+const showGlobalRanking = () => {
+    gameOverPanel.classList.remove('show')
+    rankingPanel.classList.add('is-focused')
+    rankingPanel.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+    })
+
+    setTimeout(() => {
+        rankingPanel.classList.remove('is-focused')
+    }, 1800)
 }
 
 const playDetachedSound = (soundElement) => {
@@ -374,7 +419,8 @@ document.addEventListener('click', tryPlayStartMusic, { once: true })
 document.addEventListener('touchstart', tryPlayStartMusic, { once: true })
 document.body.addEventListener('pointerdown', handleBoardTouch)
 startButton.addEventListener('click', startGame)
-restartButton.addEventListener('click', () => {
+restartButton.addEventListener('click', showGlobalRanking)
+playAgainButton.addEventListener('click', () => {
     if (isRestarting) {
         return
     }
