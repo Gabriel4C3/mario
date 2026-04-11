@@ -165,7 +165,7 @@ window.addEventListener('load', tryPlayStartMusic)
 window.addEventListener('focus', tryPlayStartMusic)
 document.addEventListener('click', tryPlayStartMusic, { once: true })
 document.addEventListener('touchstart', tryPlayStartMusic, { once: true })
-gameBoard.addEventListener('pointerdown', handleBoardTouch)
+document.body.addEventListener('pointerdown', handleBoardTouch)
 startButton.addEventListener('click', startGame)
 restartButton.addEventListener('click', () => {
     if (isRestarting) {
