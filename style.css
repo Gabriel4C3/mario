@@ -6,6 +6,7 @@
 }
 body{
     overflow: hidden;
+    background-color: #333;
 }
 .game-board{
     width: 100%;
@@ -15,6 +16,7 @@ body{
     position: relative;
     overflow: hidden;
     border-bottom: 20px solid rgb(35,160, 35);
+    background:linear-gradient(#87ceeb,#e0f6ff);
     
     
 }
